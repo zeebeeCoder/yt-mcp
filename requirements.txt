@@ -1,0 +1,19 @@
+# YouTube API and transcript extraction
+google-api-python-client==2.108.0
+youtube-transcript-api==0.6.2
+
+# AI/ML APIs
+openai==1.28.1
+google-genai==0.7.0
+
+# Data validation and manipulation
+pydantic==2.5.0
+pandas==2.1.4
+
+# CLI interface
+click==8.1.7
+rich==13.7.0
+
+# Utilities
+python-dotenv==1.0.0
+tenacity==8.2.3

@@ -1,0 +1,206 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = [".", "pipeline", "models", "utils"]
+
+[project]
+name = "yt-mcp"
+version = "0.1.0"
+description = "Chain-of-thought data pipeline for analyzing YouTube video content through AI processing"
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.9,<3.13"
+authors = [
+    { name = "YouTube Analysis Pipeline", email = "noreply@example.com" },
+]
+keywords = ["youtube", "ai", "analysis", "pipeline", "critical-thinking"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Multimedia :: Video",
+]
+
+dependencies = [
+    # YouTube API and transcript extraction
+    "google-api-python-client==2.108.0",
+    "youtube-transcript-api==0.6.2",
+    # AI/ML APIs
+    "openai>=1.30.0",
+    "google-genai==0.7.0",
+    # Data validation and manipulation
+    "pydantic==2.5.0",
+    "pandas==2.1.4",
+    # CLI interface
+    "click==8.1.7",
+    "rich==13.7.0",
+    # Utilities
+    "python-dotenv==1.0.0",
+    "tenacity==8.2.3",
+    "yt-dlp>=2025.8.22",
+]
+
+[project.optional-dependencies]
+dev = [
+    # Testing
+    "pytest>=7.4.0",
+    "pytest-cov>=4.1.0",
+    "pytest-mock>=3.11.1",
+    
+    # Type checking
+    "mypy>=1.5.0",
+    "types-requests>=2.31.0",
+    
+    # Linting and formatting
+    "ruff>=0.1.0",
+    
+    # Development utilities
+    "pre-commit>=3.4.0",
+]
+
+[project.scripts]
+yt-analyze = "main:cli"
+yt-setup = "main:setup_command"
+
+[project.urls]
+Homepage = "https://github.com/example/yt-mcp"
+Documentation = "https://github.com/example/yt-mcp#readme"
+Repository = "https://github.com/example/yt-mcp"
+Issues = "https://github.com/example/yt-mcp/issues"
+
+[dependency-groups]
+dev = [
+    "pandas-stubs>=2.2.2.240807",
+    "types-requests>=2.32.4.20250809",
+]
+
+# Tool configurations
+[tool.ruff]
+target-version = "py39"
+line-length = 100
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "UP",  # pyupgrade
+    "ARG", # flake8-unused-arguments
+    "SIM", # flake8-simplify
+    "PTH", # flake8-use-pathlib
+]
+ignore = [
+    "E501",  # line too long, handled by formatter
+    "B008",  # do not perform function calls in argument defaults
+    "ARG002", # unused method argument
+    "ARG001", # unused function argument
+]
+unfixable = [
+    "F841", # unused variables
+]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]  # Allow unused imports in __init__.py
+"examples/*" = ["ARG001", "ARG002"]  # Allow unused args in examples
+"tests/*" = ["ARG001", "ARG002", "S101"]  # Allow unused args and asserts in tests
+
+[tool.mypy]
+python_version = "3.9"
+strict = true
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+
+# Pragmatic flexibility for dynamic patterns
+[[tool.mypy.overrides]]
+module = "googleapiclient.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "google.genai.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "youtube_transcript_api.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "openai.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "rich.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "tenacity.*"
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+addopts = [
+    "-ra",
+    "--strict-markers",
+    "--strict-config",
+    "--cov=.",
+    "--cov-report=term-missing:skip-covered",
+    "--cov-report=html:htmlcov",
+    "--cov-report=xml",
+]
+testpaths = ["tests"]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks tests as integration tests",
+    "unit: marks tests as unit tests",
+]
+
+[tool.coverage.run]
+source = ["."]
+omit = [
+    "tests/*",
+    "examples/*",
+    "*/__pycache__/*",
+    "*/site-packages/*",
+    ".venv/*",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if self.debug:",
+    "if settings.DEBUG",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if 0:",
+    "if __name__ == .__main__.:",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod",
+]
+
