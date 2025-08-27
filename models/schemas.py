@@ -6,6 +6,7 @@ from pydantic import BaseModel, Field, HttpUrl
 
 class VideoMetadata(BaseModel):
     """Video metadata from YouTube API"""
+
     video_id: str
     title: str
     author: str
@@ -16,6 +17,7 @@ class VideoMetadata(BaseModel):
 
 class Comment(BaseModel):
     """Individual YouTube comment"""
+
     comment: str
     user_name: str
     date: datetime
@@ -25,6 +27,7 @@ class Comment(BaseModel):
 
 class CommentsData(BaseModel):
     """Collection of video comments"""
+
     comments: list[Comment]
     total_count: int
     processed_count: int
@@ -33,6 +36,7 @@ class CommentsData(BaseModel):
 
 class TranscriptData(BaseModel):
     """Video transcript data"""
+
     text: Optional[str]
     word_count: int
     available: bool
@@ -42,6 +46,7 @@ class TranscriptData(BaseModel):
 
 class ProcessingStep(BaseModel):
     """Individual processing step result"""
+
     step_name: str
     input_data: str
     output_data: str
@@ -52,6 +57,7 @@ class ProcessingStep(BaseModel):
 
 class CriticalThinkingStandard(BaseModel):
     """Critical thinking evaluation standard"""
+
     name: str
     evaluation: str
     rating: int = Field(ge=0, le=10)
@@ -60,6 +66,7 @@ class CriticalThinkingStandard(BaseModel):
 
 class CriticalThinkingAssessment(BaseModel):
     """Complete critical thinking assessment"""
+
     standards: list[CriticalThinkingStandard]
     selected_questions: list[str]
     impact_scores: dict[str, float]
@@ -67,6 +74,7 @@ class CriticalThinkingAssessment(BaseModel):
 
 class AnalysisResult(BaseModel):
     """Final analysis result from the chain-of-thought pipeline"""
+
     video_metadata: VideoMetadata
     transcript: Optional[TranscriptData]
     comments: CommentsData
@@ -80,14 +88,15 @@ class AnalysisResult(BaseModel):
 
 class PipelineConfig(BaseModel):
     """Configuration for the analysis pipeline"""
+
     max_comments: int = 5000
     max_total_word_length: int = 80000
-    openai_model: str = "gpt-4o-mini"
+    openai_model: str = "gpt-5"  # GPT-5 with enhanced reasoning and Responses API
     openai_temperature: float = 0.35
     gemini_model: str = "gemini-1.5-flash"
     gemini_temperature: float = 0.5
     num_selected_questions: int = 6
-    
+
     # Step toggles - fine-grained control over pipeline execution
     enable_transcript: bool = True
     enable_comments: bool = True
@@ -95,13 +104,14 @@ class PipelineConfig(BaseModel):
     enable_comments_processing: bool = True
     enable_synthesis: bool = True
     enable_evaluation: bool = True
-    
+
     # Legacy/future features
     enable_audio_download: bool = False
 
 
 class ProcessingContext(BaseModel):
     """Context passed between processing steps"""
+
     video_metadata: VideoMetadata
     transcript: Optional[TranscriptData] = None
     comments: Optional[CommentsData] = None

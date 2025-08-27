@@ -1,53 +1,57 @@
 import os
 from typing import Any, Optional
 
-from dotenv import load_dotenv
-
 from models.schemas import PipelineConfig
-
-load_dotenv()
+from utils.credentials import get_missing_keys, load_credentials, validate_api_keys
 
 
 class Config:
     """Application configuration management"""
 
-    # API Keys
-    YOUTUBE_API_KEY: str = os.getenv("YOUTUBE_API_KEY", "")
-    OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY", "")
-    GOOGLE_GENAI_API_KEY: str = os.getenv("GOOGLE_GENAI_API_KEY", "")
+    @classmethod
+    def load_config(cls, env_file: Optional[str] = None, config_dir: Optional[str] = None) -> None:
+        """Load configuration from specified sources"""
+        load_credentials(env_file, config_dir)
 
-    # Pipeline Configuration
-    DEFAULT_PIPELINE_CONFIG = PipelineConfig()
+    @classmethod
+    def get_api_keys(cls) -> dict[str, str]:
+        """Get current API keys from environment"""
+        return {
+            "youtube": os.getenv("YOUTUBE_API_KEY", ""),
+            "openai": os.getenv("OPENAI_API_KEY", ""),
+            "google_genai": os.getenv("GOOGLE_GENAI_API_KEY", ""),
+        }
 
+    # API Keys (dynamic properties)
+    @property
+    def YOUTUBE_API_KEY(self) -> str:
+        return os.getenv("YOUTUBE_API_KEY", "")
+
+    @property
+    def OPENAI_API_KEY(self) -> str:
+        return os.getenv("OPENAI_API_KEY", "")
+
+    @property
+    def GOOGLE_GENAI_API_KEY(self) -> str:
+        return os.getenv("GOOGLE_GENAI_API_KEY", "")
+
+    # Class-level access for backward compatibility
     @classmethod
     def validate_api_keys(cls) -> dict[str, bool]:
         """Validate that required API keys are present"""
-        return {
-            "youtube": bool(cls.YOUTUBE_API_KEY),
-            "openai": bool(cls.OPENAI_API_KEY),
-            "google_genai": bool(cls.GOOGLE_GENAI_API_KEY)
-        }
+        return validate_api_keys()
 
     @classmethod
     def get_missing_keys(cls) -> list[str]:
         """Get list of missing API keys"""
-        validation = cls.validate_api_keys()
-        return [key for key, valid in validation.items() if not valid]
+        return get_missing_keys()
 
-    @classmethod
-    def create_env_template(cls, file_path: str = ".env.template") -> None:
-        """Create a template .env file"""
-        template_content = """# YouTube Data API v3 key
-YOUTUBE_API_KEY=your_youtube_api_key_here
+    # Pipeline Configuration
+    DEFAULT_PIPELINE_CONFIG = PipelineConfig()
 
-# OpenAI API key  
-OPENAI_API_KEY=your_openai_api_key_here
 
-# Google GenAI (Gemini) API key
-GOOGLE_GENAI_API_KEY=your_google_genai_api_key_here
-"""
-        with open(file_path, "w") as f:
-            f.write(template_content)
+# Create singleton instance
+config = Config()
 
 
 def get_pipeline_config(
@@ -65,7 +69,7 @@ def get_pipeline_config(
     enable_comments_processing: Optional[bool] = None,
     enable_synthesis: Optional[bool] = None,
     enable_evaluation: Optional[bool] = None,
-    enable_audio_download: Optional[bool] = None
+    enable_audio_download: Optional[bool] = None,
 ) -> PipelineConfig:
     """Create pipeline configuration with optional overrides"""
     config_dict: dict[str, Any] = {}
@@ -84,7 +88,7 @@ def get_pipeline_config(
         config_dict["gemini_temperature"] = gemini_temperature
     if num_selected_questions is not None:
         config_dict["num_selected_questions"] = num_selected_questions
-    
+
     # Step control options
     if enable_transcript is not None:
         config_dict["enable_transcript"] = enable_transcript

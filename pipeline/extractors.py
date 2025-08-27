@@ -1,14 +1,12 @@
-import json
-import subprocess
 import time
 from datetime import datetime
 from urllib.parse import parse_qs, urlparse
 
+import yt_dlp
 from googleapiclient.discovery import build
 from tenacity import retry, stop_after_attempt, wait_exponential
 from youtube_transcript_api import YouTubeTranscriptApi
 from youtube_transcript_api._errors import TranscriptsDisabled
-import yt_dlp
 
 from models.schemas import Comment, CommentsData, TranscriptData, VideoMetadata
 from utils.logging import get_logger
@@ -26,24 +24,24 @@ class YouTubeExtractor:
     def extract_video_id(self, video_url: str) -> str:
         """Extract video ID from YouTube URL with robust parsing"""
         import re
-        
+
         # Clean up escaped characters that might come from shell/copy-paste
         clean_url = video_url.replace("\\?", "?").replace("\\&", "&").replace("\\=", "=")
-        
+
         # Handle various YouTube URL formats
         patterns = [
-            r'(?:v=|/)([0-9A-Za-z_-]{11}).*',  # Standard and shortened URLs
-            r'(?:embed/)([0-9A-Za-z_-]{11}).*',  # Embed URLs
-            r'(?:watch\?.*v=)([0-9A-Za-z_-]{11}).*',  # Watch URLs with parameters
+            r"(?:v=|/)([0-9A-Za-z_-]{11}).*",  # Standard and shortened URLs
+            r"(?:embed/)([0-9A-Za-z_-]{11}).*",  # Embed URLs
+            r"(?:watch\?.*v=)([0-9A-Za-z_-]{11}).*",  # Watch URLs with parameters
         ]
-        
+
         for pattern in patterns:
             match = re.search(pattern, clean_url)
             if match:
                 video_id = match.group(1)
                 logger.info(f"Extracted video ID '{video_id}' from URL: {video_url}")
                 return video_id
-        
+
         # Fallback to original parsing method
         try:
             parsed_url = urlparse(clean_url)
@@ -52,9 +50,8 @@ class YouTubeExtractor:
                 return video_id[0]
         except Exception as e:
             logger.warning(f"Fallback URL parsing failed: {e}")
-        
+
         raise ValueError(f"Could not extract video ID from URL: {video_url}")
-    
 
     @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=2, max=10))
     def fetch_video_metadata(self, video_id: str) -> VideoMetadata:
@@ -76,7 +73,7 @@ class YouTubeExtractor:
             author=video_data["channelTitle"],
             channel_title=video_data["channelTitle"],
             published_date=datetime.fromisoformat(video_data["publishedAt"].replace("Z", "+00:00")),
-            url=f"https://www.youtube.com/watch?v={video_id}"
+            url=f"https://www.youtube.com/watch?v={video_id}",
         )
 
     def fetch_transcript(self, video_id: str) -> TranscriptData:
@@ -92,17 +89,14 @@ class YouTubeExtractor:
                 char_count = len(transcript_text)
                 # Rough token estimate (1 token ≈ 4 characters for English)
                 estimated_tokens = char_count // 4
-                
-                logger.info(f"YT-DLP transcript extracted successfully:")
+
+                logger.info("YT-DLP transcript extracted successfully:")
                 logger.info(f"  - Character count: {char_count:,}")
                 logger.info(f"  - Word count: {word_count:,}")
                 logger.info(f"  - Estimated tokens: {estimated_tokens:,}")
-                
+
                 return TranscriptData(
-                    text=transcript_text,
-                    word_count=word_count,
-                    available=True,
-                    language="yt-dlp"
+                    text=transcript_text, word_count=word_count, available=True, language="yt-dlp"
                 )
         except Exception as e:
             logger.warning(f"YT-DLP transcript extraction failed: {e}")
@@ -112,22 +106,19 @@ class YouTubeExtractor:
             logger.info("Falling back to youtube-transcript-api...")
             transcript_data = YouTubeTranscriptApi.get_transcript(video_id)
             transcript_text = " ".join([item["text"] for item in transcript_data])
-            
+
             word_count = len(transcript_text.split())
             char_count = len(transcript_text)
             estimated_tokens = char_count // 4
-            
-            logger.info(f"YouTube-API transcript extracted successfully:")
+
+            logger.info("YouTube-API transcript extracted successfully:")
             logger.info(f"  - Character count: {char_count:,}")
             logger.info(f"  - Word count: {word_count:,}")
             logger.info(f"  - Estimated tokens: {estimated_tokens:,}")
             logger.info(f"  - Transcript segments: {len(transcript_data):,}")
 
             return TranscriptData(
-                text=transcript_text,
-                word_count=word_count,
-                available=True,
-                language="youtube-api"
+                text=transcript_text, word_count=word_count, available=True, language="youtube-api"
             )
 
         except TranscriptsDisabled:
@@ -136,7 +127,7 @@ class YouTubeExtractor:
                 text=None,
                 word_count=0,
                 available=False,
-                error_message="Transcripts are disabled for this video"
+                error_message="Transcripts are disabled for this video",
             )
 
         except Exception as e:
@@ -156,7 +147,7 @@ class YouTubeExtractor:
                         text=transcript_text,
                         word_count=len(transcript_text.split()),
                         available=True,
-                        language="alternative"
+                        language="alternative",
                     )
                 except Exception as alt_e:
                     logger.error(f"Alternative transcript fetch also failed: {alt_e}")
@@ -165,48 +156,48 @@ class YouTubeExtractor:
                 text=None,
                 word_count=0,
                 available=False,
-                error_message=f"All transcript extraction methods failed. YT-DLP: failed, YouTube-API: {error_msg}"
+                error_message=f"All transcript extraction methods failed. YT-DLP: failed, YouTube-API: {error_msg}",
             )
 
     def _extract_transcript_with_ytdlp(self, video_id: str) -> str:
         """Extract transcript using YT-DLP"""
         video_url = f"https://www.youtube.com/watch?v={video_id}"
-        
+
         # Configure YT-DLP options
         ydl_opts = {
-            'writesubtitles': True,
-            'writeautomaticsub': True,
-            'skip_download': True,  # Don't download video, just subtitles
-            'subtitleslangs': ['en', 'en-US', 'en-GB'],  # Prefer English
-            'subtitlesformat': 'ttml/vtt/srv1/srv2/srv3',  # Multiple formats
-            'quiet': True,  # Suppress output
-            'no_warnings': True,
+            "writesubtitles": True,
+            "writeautomaticsub": True,
+            "skip_download": True,  # Don't download video, just subtitles
+            "subtitleslangs": ["en", "en-US", "en-GB"],  # Prefer English
+            "subtitlesformat": "ttml/vtt/srv1/srv2/srv3",  # Multiple formats
+            "quiet": True,  # Suppress output
+            "no_warnings": True,
         }
 
         try:
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 # Get video info including available subtitles
                 info = ydl.extract_info(video_url, download=False)
-                
+
                 # Check for manual subtitles first (higher quality)
-                if info.get('subtitles'):
-                    for lang in ['en', 'en-US', 'en-GB']:
-                        if lang in info['subtitles']:
-                            subtitle_info = info['subtitles'][lang][0]
-                            subtitle_url = subtitle_info['url']
+                if info.get("subtitles"):
+                    for lang in ["en", "en-US", "en-GB"]:
+                        if lang in info["subtitles"]:
+                            subtitle_info = info["subtitles"][lang][0]
+                            subtitle_url = subtitle_info["url"]
                             return self._download_and_parse_subtitle(subtitle_url)
-                
+
                 # Fall back to automatic captions
-                if info.get('automatic_captions'):
-                    for lang in ['en', 'en-US', 'en-GB']:
-                        if lang in info['automatic_captions']:
-                            subtitle_info = info['automatic_captions'][lang][0]
-                            subtitle_url = subtitle_info['url']
+                if info.get("automatic_captions"):
+                    for lang in ["en", "en-US", "en-GB"]:
+                        if lang in info["automatic_captions"]:
+                            subtitle_info = info["automatic_captions"][lang][0]
+                            subtitle_url = subtitle_info["url"]
                             return self._download_and_parse_subtitle(subtitle_url)
-                
+
                 logger.warning(f"No subtitles found for video {video_id}")
                 return ""
-                
+
         except Exception as e:
             logger.error(f"YT-DLP extraction failed for {video_id}: {e}")
             raise
@@ -216,29 +207,32 @@ class YouTubeExtractor:
         try:
             # Use YT-DLP to download subtitle content
             ydl_opts = {
-                'quiet': True,
-                'no_warnings': True,
+                "quiet": True,
+                "no_warnings": True,
             }
-            
+
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 # Download subtitle content
-                subtitle_content = ydl.urlopen(subtitle_url).read().decode('utf-8')
-                
+                subtitle_content = ydl.urlopen(subtitle_url).read().decode("utf-8")
+
                 # Parse different subtitle formats
-                if '<tt xml:lang=' in subtitle_content or '<transcript>' in subtitle_content:
+                if "<tt xml:lang=" in subtitle_content or "<transcript>" in subtitle_content:
                     # TTML format
                     return self._parse_ttml_content(subtitle_content)
-                elif 'WEBVTT' in subtitle_content:
+                elif "WEBVTT" in subtitle_content:
                     # WebVTT format
                     return self._parse_webvtt_content(subtitle_content)
                 else:
                     # Try to extract text from other formats
                     import re
+
                     # Simple regex to extract text content
-                    text_content = re.sub(r'<[^>]+>', '', subtitle_content)
-                    text_content = re.sub(r'\d{2}:\d{2}:\d{2}\.\d{3} --> \d{2}:\d{2}:\d{2}\.\d{3}', '', text_content)
-                    return ' '.join(text_content.split())
-                    
+                    text_content = re.sub(r"<[^>]+>", "", subtitle_content)
+                    text_content = re.sub(
+                        r"\d{2}:\d{2}:\d{2}\.\d{3} --> \d{2}:\d{2}:\d{2}\.\d{3}", "", text_content
+                    )
+                    return " ".join(text_content.split())
+
         except Exception as e:
             logger.error(f"Failed to download/parse subtitle: {e}")
             raise
@@ -246,38 +240,43 @@ class YouTubeExtractor:
     def _parse_ttml_content(self, content: str) -> str:
         """Parse TTML subtitle content"""
         import re
+
         # Extract text from <p> tags
-        text_matches = re.findall(r'<p[^>]*>(.*?)</p>', content, re.DOTALL)
+        text_matches = re.findall(r"<p[^>]*>(.*?)</p>", content, re.DOTALL)
         text_parts = []
         for match in text_matches:
             # Remove any remaining XML tags
-            clean_text = re.sub(r'<[^>]+>', ' ', match)
+            clean_text = re.sub(r"<[^>]+>", " ", match)
             clean_text = clean_text.strip()
             if clean_text:
                 text_parts.append(clean_text)
-        return ' '.join(text_parts)
+        return " ".join(text_parts)
 
     def _parse_webvtt_content(self, content: str) -> str:
         """Parse WebVTT subtitle content"""
-        lines = content.split('\n')
+        lines = content.split("\n")
         text_parts = []
-        
+
         for line in lines:
             line = line.strip()
             # Skip headers, timestamps, and empty lines
-            if (line.startswith('WEBVTT') or 
-                line.startswith('NOTE') or
-                '-->' in line or 
-                not line or
-                line.startswith('STYLE') or
-                line.startswith('Kind:')):
+            if (
+                line.startswith("WEBVTT")
+                or line.startswith("NOTE")
+                or "-->" in line
+                or not line
+                or line.startswith("STYLE")
+                or line.startswith("Kind:")
+            ):
                 continue
             text_parts.append(line)
-        
-        return ' '.join(text_parts)
+
+        return " ".join(text_parts)
 
     @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=2, max=10))
-    def fetch_comments(self, video_id: str, max_comments: int = 5000, max_total_word_length: int = 80000) -> CommentsData:
+    def fetch_comments(
+        self, video_id: str, max_comments: int = 5000, max_total_word_length: int = 80000
+    ) -> CommentsData:
         """Fetch video comments from YouTube API with pagination"""
         logger.info(f"Fetching comments for video: {video_id} (max: {max_comments})")
 
@@ -292,7 +291,7 @@ class YouTubeExtractor:
                     videoId=video_id,
                     textFormat="plainText",
                     pageToken=page_token,
-                    maxResults=min(100, max_comments - len(comments))
+                    maxResults=min(100, max_comments - len(comments)),
                 )
 
                 response = request.execute()
@@ -305,23 +304,26 @@ class YouTubeExtractor:
 
                     # Check word limit
                     if total_word_count + comment_word_count > max_total_word_length:
-                        logger.info(f"Reached word limit ({max_total_word_length}), stopping comment collection")
+                        logger.info(
+                            f"Reached word limit ({max_total_word_length}), stopping comment collection"
+                        )
                         break
 
                     # Extract replies if present
                     replies = []
                     if "replies" in item:
                         replies = [
-                            reply["snippet"]["textDisplay"]
-                            for reply in item["replies"]["comments"]
+                            reply["snippet"]["textDisplay"] for reply in item["replies"]["comments"]
                         ]
 
                     comment = Comment(
                         comment=comment_text,
                         user_name=comment_snippet["authorDisplayName"],
-                        date=datetime.fromisoformat(comment_snippet["publishedAt"].replace("Z", "+00:00")),
+                        date=datetime.fromisoformat(
+                            comment_snippet["publishedAt"].replace("Z", "+00:00")
+                        ),
                         like_count=comment_snippet["likeCount"],
-                        replies=replies
+                        replies=replies,
                     )
 
                     comments.append(comment)
@@ -344,5 +346,5 @@ class YouTubeExtractor:
             comments=comments,
             total_count=len(comments),
             processed_count=len(comments),
-            total_word_count=total_word_count
+            total_word_count=total_word_count,
         )

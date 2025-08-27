@@ -51,32 +51,31 @@ Summary of the topic or assumptions made by the speaker:
 
     @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=2, max=10))
     def compress_content(
-        self,
-        transcript_summary: str,
-        comments_summary: str,
-        config: PipelineConfig
+        self, transcript_summary: str, comments_summary: str, config: PipelineConfig
     ) -> str:
         """Compress and synthesize transcript and comments summaries"""
 
         # Calculate input metrics
         input_chars = len((transcript_summary or "") + (comments_summary or ""))
-        input_words = len((transcript_summary or "").split()) + len((comments_summary or "").split())
+        input_words = len((transcript_summary or "").split()) + len(
+            (comments_summary or "").split()
+        )
         estimated_input_tokens = input_chars // 4
-        
+
         logger.info(f"Compressing content using {config.gemini_model}")
-        logger.info(f"Synthesis input metrics:")
+        logger.info("Synthesis input metrics:")
         logger.info(f"  - Combined characters: {input_chars:,}")
         logger.info(f"  - Combined words: {input_words:,}")
         logger.info(f"  - Estimated tokens: {estimated_input_tokens:,}")
 
         prompt = self.compression_prompt_template.format(
             transcript_summary=transcript_summary or "No transcript summary available.",
-            comments_summary=comments_summary
+            comments_summary=comments_summary,
         )
-        
+
         prompt_chars = len(prompt)
         estimated_prompt_tokens = prompt_chars // 4
-        logger.info(f"Gemini prompt metrics:")
+        logger.info("Gemini prompt metrics:")
         logger.info(f"  - Total prompt characters: {prompt_chars:,}")
         logger.info(f"  - Estimated prompt tokens: {estimated_prompt_tokens:,}")
 
@@ -86,44 +85,47 @@ Summary of the topic or assumptions made by the speaker:
 
         try:
             import time
+
             start_time = time.time()
-            
-            logger.info(f"Gemini API call starting:")
+
+            logger.info("Gemini API call starting:")
             logger.info(f"  - Model: {config.gemini_model}")
             logger.info(f"  - Temperature: {config.gemini_temperature}")
-            
+
             response = self.client.models.generate_content(
                 model=config.gemini_model,
                 contents=prompt,
                 config=generation_config,
             )
-            
+
             # Calculate latency
             end_time = time.time()
             latency_ms = (end_time - start_time) * 1000
-            
+
             # Log output metrics
             output_chars = len(response.text)
             output_words = len(response.text.split())
             estimated_output_tokens = output_chars // 4
             compression_ratio = (input_chars / output_chars) if output_chars > 0 else 0
-            
-            logger.info(f"Gemini API call completed:")
+
+            logger.info("Gemini API call completed:")
             logger.info(f"  - Latency: {latency_ms:.0f}ms")
             logger.info(f"  - Output characters: {output_chars:,}")
             logger.info(f"  - Output words: {output_words:,}")
             logger.info(f"  - Estimated output tokens: {estimated_output_tokens:,}")
             logger.info(f"  - Compression ratio: {compression_ratio:.1f}:1")
-            
+
             # Check if usage stats are available in response
-            if hasattr(response, 'usage') and response.usage:
-                logger.info(f"Gemini token usage (actual):")
+            if hasattr(response, "usage") and response.usage:
+                logger.info("Gemini token usage (actual):")
                 logger.info(f"  - Input tokens: {getattr(response.usage, 'input_tokens', 'N/A'):,}")
-                logger.info(f"  - Output tokens: {getattr(response.usage, 'output_tokens', 'N/A'):,}")
+                logger.info(
+                    f"  - Output tokens: {getattr(response.usage, 'output_tokens', 'N/A'):,}"
+                )
                 logger.info(f"  - Total tokens: {getattr(response.usage, 'total_tokens', 'N/A'):,}")
             else:
                 logger.warning("Token usage data not available from Gemini response")
-            
+
             logger.info("Content compression completed successfully")
             return response.text
 
@@ -138,15 +140,15 @@ class InsightExtractor:
     @staticmethod
     def extract_headline(compressed_content: str) -> Optional[str]:
         """Extract headline from compressed content if present"""
-        lines = compressed_content.strip().split('\n')
+        lines = compressed_content.strip().split("\n")
 
         # Look for markdown-style headline
         for line in lines:
             line = line.strip()
-            if line.startswith('**') and line.endswith('**'):
-                return line.strip('*').strip()
-            elif line.startswith('#'):
-                return line.lstrip('#').strip()
+            if line.startswith("**") and line.endswith("**"):
+                return line.strip("*").strip()
+            elif line.startswith("#"):
+                return line.lstrip("#").strip()
 
         # If no headline found, take first line if it's short enough
         first_line = lines[0].strip() if lines else ""
@@ -158,17 +160,17 @@ class InsightExtractor:
     @staticmethod
     def extract_key_points(compressed_content: str) -> list[str]:
         """Extract bullet points or key insights from content"""
-        lines = compressed_content.strip().split('\n')
+        lines = compressed_content.strip().split("\n")
         key_points = []
 
         for line in lines:
             line = line.strip()
             # Look for bullet points or numbered items
-            if line.startswith(('- ', '* ', '• ')):
+            if line.startswith(("- ", "* ", "• ")):
                 key_points.append(line[2:].strip())
             elif line.startswith(tuple(f"{i}. " for i in range(1, 10))):
                 # Remove number prefix
-                key_points.append(line.split('. ', 1)[1] if '. ' in line else line)
+                key_points.append(line.split(". ", 1)[1] if ". " in line else line)
 
         return key_points
 
@@ -188,5 +190,5 @@ class InsightExtractor:
             "word_count": word_count,
             "char_count": char_count,
             "has_structure": bool(headline or key_points),
-            "compression_ratio": None  # Will be calculated when we have original length
+            "compression_ratio": None,  # Will be calculated when we have original length
         }

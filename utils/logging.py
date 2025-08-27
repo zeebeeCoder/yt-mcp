@@ -10,8 +10,7 @@ def setup_logging(level: str = "INFO", log_file: Optional[str] = None) -> None:
 
     # Create formatter
     formatter = logging.Formatter(
-        fmt="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S"
+        fmt="%(asctime)s - %(name)s - %(levelname)s - %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
     )
 
     # Setup root logger
@@ -76,7 +75,9 @@ class StepLogger:
             self.logger.info(f"Completed step '{self.current_step}' in {duration:.2f}s")
         else:
             error_part = f" - Error: {error_message}" if error_message else ""
-            self.logger.error(f"Step '{self.current_step}' failed after {duration:.2f}s{error_part}")
+            self.logger.error(
+                f"Step '{self.current_step}' failed after {duration:.2f}s{error_part}"
+            )
 
         self.current_step = None
         self.step_start_time = None

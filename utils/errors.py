@@ -1,24 +1,29 @@
 """Custom exceptions for the YouTube analysis pipeline"""
-from typing import Callable, Optional, Any
+
+from typing import Any, Callable, Optional
 
 
 class PipelineError(Exception):
     """Base exception for pipeline errors"""
+
     pass
 
 
 class ConfigurationError(PipelineError):
     """Raised when configuration is invalid or missing"""
+
     pass
 
 
 class ExtractionError(PipelineError):
     """Raised when data extraction fails"""
+
     pass
 
 
 class ProcessingError(PipelineError):
     """Raised when AI processing fails"""
+
     pass
 
 
@@ -33,11 +38,13 @@ class APIError(PipelineError):
 
 class ValidationError(PipelineError):
     """Raised when data validation fails"""
+
     pass
 
 
 def handle_api_error(func: Callable[..., Any]) -> Callable[..., Any]:
     """Decorator to handle common API errors"""
+
     def wrapper(*args: Any, **kwargs: Any) -> Any:
         try:
             return func(*args, **kwargs)

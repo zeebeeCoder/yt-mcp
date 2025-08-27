@@ -41,14 +41,14 @@ def basic_example():
     config = get_pipeline_config(
         max_comments=100,  # Smaller for example
         max_total_word_length=10000,
-        enable_transcript=True
+        enable_transcript=True,
     )
 
     # Initialize processor
     processor = ChainProcessor(
         youtube_api_key=Config.YOUTUBE_API_KEY,
         openai_api_key=Config.OPENAI_API_KEY,
-        google_genai_api_key=Config.GOOGLE_GENAI_API_KEY
+        google_genai_api_key=Config.GOOGLE_GENAI_API_KEY,
     )
 
     try:
@@ -56,9 +56,7 @@ def basic_example():
 
         # Run analysis
         result = processor.analyze_video(
-            video_url=video_url,
-            config=config,
-            instruction=PromptTemplates.SUMMARIZE_FOR_REFLECTION
+            video_url=video_url, config=config, instruction=PromptTemplates.SUMMARIZE_FOR_REFLECTION
         )
 
         # Display results
@@ -103,7 +101,7 @@ def custom_instruction_example():
     processor = ChainProcessor(
         youtube_api_key=Config.YOUTUBE_API_KEY,
         openai_api_key=Config.OPENAI_API_KEY,
-        google_genai_api_key=Config.GOOGLE_GENAI_API_KEY
+        google_genai_api_key=Config.GOOGLE_GENAI_API_KEY,
     )
 
     # Example tech video
@@ -111,9 +109,7 @@ def custom_instruction_example():
 
     try:
         result = processor.analyze_video(
-            video_url=video_url,
-            config=config,
-            instruction=custom_instruction
+            video_url=video_url, config=config, instruction=custom_instruction
         )
 
         print("Custom Analysis Results:")
@@ -129,18 +125,15 @@ def batch_analysis_example():
     video_urls = [
         "https://www.youtube.com/watch?v=example1",
         "https://www.youtube.com/watch?v=example2",
-        "https://www.youtube.com/watch?v=example3"
+        "https://www.youtube.com/watch?v=example3",
     ]
 
-    config = get_pipeline_config(
-        max_comments=200,
-        enable_transcript=True
-    )
+    config = get_pipeline_config(max_comments=200, enable_transcript=True)
 
     processor = ChainProcessor(
         youtube_api_key=Config.YOUTUBE_API_KEY,
         openai_api_key=Config.OPENAI_API_KEY,
-        google_genai_api_key=Config.GOOGLE_GENAI_API_KEY
+        google_genai_api_key=Config.GOOGLE_GENAI_API_KEY,
     )
 
     results = []
@@ -149,29 +142,28 @@ def batch_analysis_example():
         print(f"Processing video {i}/{len(video_urls)}: {video_url}")
 
         try:
-            result = processor.analyze_video(
-                video_url=video_url,
-                config=config
-            )
+            result = processor.analyze_video(video_url=video_url, config=config)
 
-            results.append({
-                "url": video_url,
-                "title": result.video_metadata.title,
-                "summary": result.compressed_summary,
-                "questions": result.critical_assessment.selected_questions if result.critical_assessment else []
-            })
+            results.append(
+                {
+                    "url": video_url,
+                    "title": result.video_metadata.title,
+                    "summary": result.compressed_summary,
+                    "questions": result.critical_assessment.selected_questions
+                    if result.critical_assessment
+                    else [],
+                }
+            )
 
             print(f"✓ Completed: {result.video_metadata.title}")
 
         except Exception as e:
             print(f"✗ Failed: {e}")
-            results.append({
-                "url": video_url,
-                "error": str(e)
-            })
+            results.append({"url": video_url, "error": str(e)})
 
     # Save batch results
     import json
+
     with open("batch_analysis_results.json", "w") as f:
         json.dump(results, f, indent=2, default=str)
 

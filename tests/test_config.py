@@ -1,4 +1,5 @@
 """Tests for configuration module."""
+
 import tempfile
 from pathlib import Path
 
@@ -23,11 +24,7 @@ class TestConfig:
 
         result = Config.validate_api_keys()
 
-        assert result == {
-            "youtube": True,
-            "openai": True,
-            "google_genai": True
-        }
+        assert result == {"youtube": True, "openai": True, "google_genai": True}
 
     def test_validate_api_keys_missing(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Test API key validation when keys are missing."""
@@ -37,11 +34,7 @@ class TestConfig:
 
         result = Config.validate_api_keys()
 
-        assert result == {
-            "youtube": False,
-            "openai": True,
-            "google_genai": False
-        }
+        assert result == {"youtube": False, "openai": True, "google_genai": False}
 
     def test_get_missing_keys(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Test getting list of missing API keys."""
@@ -82,9 +75,7 @@ class TestPipelineConfig:
     def test_get_pipeline_config_with_overrides(self) -> None:
         """Test getting pipeline config with overrides."""
         config = get_pipeline_config(
-            max_comments=1000,
-            openai_temperature=0.7,
-            enable_transcript=False
+            max_comments=1000, openai_temperature=0.7, enable_transcript=False
         )
 
         assert config.max_comments == 1000

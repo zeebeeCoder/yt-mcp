@@ -87,6 +87,9 @@ results.json
 # Generated report files (examples/testing)
 *_report.md
 test_*.md
+test_outputs/
+output/
+outputs/
 
 # Jupyter notebooks (may contain API keys)
 *.ipynb

@@ -15,6 +15,7 @@ logger = get_logger(__name__)
 
 class StandardResponse(BaseModel):
     """Response model for critical thinking standard evaluation"""
+
     name: str = Field(description="Name of the standard")
     evaluation: str = Field(description="Evaluation of the standard")
     rating: int = Field(description="Rating of the standard - 0-10")
@@ -23,6 +24,7 @@ class StandardResponse(BaseModel):
 
 class EvaluationResponse(BaseModel):
     """Complete evaluation response model"""
+
     standards: List[StandardResponse]
 
 
@@ -135,32 +137,33 @@ Summary of the topic or assumptions made by the speaker :
 
     @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=2, max=10))
     def evaluate_content(
-        self,
-        transcript_summary: str,
-        comments_summary: str,
-        config: PipelineConfig
+        self, transcript_summary: str, comments_summary: str, config: PipelineConfig
     ) -> CriticalThinkingAssessment:
         """Evaluate content against critical thinking standards"""
 
         # Calculate input metrics
         input_chars = len((transcript_summary or "") + (comments_summary or ""))
-        input_words = len((transcript_summary or "").split()) + len((comments_summary or "").split())
+        input_words = len((transcript_summary or "").split()) + len(
+            (comments_summary or "").split()
+        )
         estimated_input_tokens = input_chars // 4
-        
-        logger.info(f"Evaluating content using critical thinking standards with {config.gemini_model}")
-        logger.info(f"Evaluation input metrics:")
+
+        logger.info(
+            f"Evaluating content using critical thinking standards with {config.gemini_model}"
+        )
+        logger.info("Evaluation input metrics:")
         logger.info(f"  - Combined characters: {input_chars:,}")
         logger.info(f"  - Combined words: {input_words:,}")
         logger.info(f"  - Estimated tokens: {estimated_input_tokens:,}")
 
         prompt = self.evaluation_prompt_template.format(
             transcript_summary=transcript_summary or "No transcript summary available.",
-            comments_summary=comments_summary
+            comments_summary=comments_summary,
         )
-        
+
         prompt_chars = len(prompt)
         estimated_prompt_tokens = prompt_chars // 4
-        logger.info(f"Gemini evaluation prompt metrics:")
+        logger.info("Gemini evaluation prompt metrics:")
         logger.info(f"  - Total prompt characters: {prompt_chars:,}")
         logger.info(f"  - Estimated prompt tokens: {estimated_prompt_tokens:,}")
 
@@ -172,19 +175,20 @@ Summary of the topic or assumptions made by the speaker :
 
         try:
             import time
+
             start_time = time.time()
-            
-            logger.info(f"Gemini API call starting (evaluation):")
+
+            logger.info("Gemini API call starting (evaluation):")
             logger.info(f"  - Model: {config.gemini_model}")
             logger.info(f"  - Temperature: {config.gemini_temperature}")
-            logger.info(f"  - Response format: JSON structured")
-            
+            logger.info("  - Response format: JSON structured")
+
             response = self.client.models.generate_content(
                 model=config.gemini_model,
                 contents=prompt,
                 config=generation_config,
             )
-            
+
             # Calculate latency
             end_time = time.time()
             latency_ms = (end_time - start_time) * 1000
@@ -197,7 +201,7 @@ Summary of the topic or assumptions made by the speaker :
                     name=std.name,
                     evaluation=std.evaluation,
                     rating=std.rating,
-                    followup_questions=std.followup_questions
+                    followup_questions=std.followup_questions,
                 )
                 for std in evaluation_data.standards
             ]
@@ -206,50 +210,60 @@ Summary of the topic or assumptions made by the speaker :
             output_chars = len(response.text)
             output_words = len(response.text.split())
             estimated_output_tokens = output_chars // 4
-            
-            logger.info(f"Gemini API call completed (evaluation):")
+
+            logger.info("Gemini API call completed (evaluation):")
             logger.info(f"  - Latency: {latency_ms:.0f}ms")
             logger.info(f"  - Output characters: {output_chars:,}")
             logger.info(f"  - Output words: {output_words:,}")
             logger.info(f"  - Estimated output tokens: {estimated_output_tokens:,}")
-            
+
             # Check if usage stats are available in response
-            if hasattr(response, 'usage') and response.usage:
-                logger.info(f"Gemini token usage (actual, evaluation):")
+            if hasattr(response, "usage") and response.usage:
+                logger.info("Gemini token usage (actual, evaluation):")
                 logger.info(f"  - Input tokens: {getattr(response.usage, 'input_tokens', 'N/A'):,}")
-                logger.info(f"  - Output tokens: {getattr(response.usage, 'output_tokens', 'N/A'):,}")
+                logger.info(
+                    f"  - Output tokens: {getattr(response.usage, 'output_tokens', 'N/A'):,}"
+                )
                 logger.info(f"  - Total tokens: {getattr(response.usage, 'total_tokens', 'N/A'):,}")
             else:
                 logger.warning("Token usage data not available from Gemini response (evaluation)")
-            
+
             # Select best questions
-            selected_questions = self._select_best_questions(standards, config.num_selected_questions)
-            logger.info(f"Selected {len(selected_questions)} priority questions from {len([q for s in standards for q in s.followup_questions])} total")
+            selected_questions = self._select_best_questions(
+                standards, config.num_selected_questions
+            )
+            logger.info(
+                f"Selected {len(selected_questions)} priority questions from {len([q for s in standards for q in s.followup_questions])} total"
+            )
             logger.info(f"Evaluation completed with {len(standards)} standards assessed")
 
             return CriticalThinkingAssessment(
                 standards=standards,
                 selected_questions=selected_questions,
-                impact_scores=self._calculate_impact_scores(standards)
+                impact_scores=self._calculate_impact_scores(standards),
             )
 
         except Exception as e:
             logger.error(f"Google GenAI error during critical thinking evaluation: {e}")
             raise APIError(f"Critical thinking evaluation failed: {e}", "google_genai")
 
-    def _select_best_questions(self, standards: List[CriticalThinkingStandard], num_questions: int) -> List[str]:
+    def _select_best_questions(
+        self, standards: List[CriticalThinkingStandard], num_questions: int
+    ) -> List[str]:
         """Select the most impactful questions for follow-up"""
 
         # Create dataframe for analysis
         questions_data = []
         for standard in standards:
             for question in standard.followup_questions:
-                questions_data.append({
-                    "standard_name": standard.name,
-                    "question": question,
-                    "rating": standard.rating,
-                    "impact_score": (10 - standard.rating) * 10  # Lower rating = higher impact
-                })
+                questions_data.append(
+                    {
+                        "standard_name": standard.name,
+                        "question": question,
+                        "rating": standard.rating,
+                        "impact_score": (10 - standard.rating) * 10,  # Lower rating = higher impact
+                    }
+                )
 
         if not questions_data:
             return []
@@ -283,7 +297,9 @@ Summary of the topic or assumptions made by the speaker :
         logger.info(f"Selected {len(selected)} priority questions from {len(questions_data)} total")
         return selected[:num_questions]
 
-    def _calculate_impact_scores(self, standards: List[CriticalThinkingStandard]) -> dict[str, float]:
+    def _calculate_impact_scores(
+        self, standards: List[CriticalThinkingStandard]
+    ) -> dict[str, float]:
         """Calculate impact scores for each standard"""
         scores = {}
         for standard in standards:

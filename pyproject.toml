@@ -11,7 +11,7 @@ version = "0.1.0"
 description = "Chain-of-thought data pipeline for analyzing YouTube video content through AI processing"
 readme = "README.md"
 license = { text = "MIT" }
-requires-python = ">=3.9,<3.13"
+requires-python = ">=3.9,<3.14"
 authors = [
     { name = "YouTube Analysis Pipeline", email = "noreply@example.com" },
 ]
@@ -26,26 +26,27 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
     "Topic :: Multimedia :: Video",
 ]
 
 dependencies = [
     # YouTube API and transcript extraction
-    "google-api-python-client==2.108.0",
-    "youtube-transcript-api==0.6.2",
+    "google-api-python-client>=2.108.0",
+    "youtube-transcript-api>=0.6.2",
     # AI/ML APIs
-    "openai>=1.30.0",
-    "google-genai==0.7.0",
+    "openai>=1.101.0",
+    "google-genai>=0.7.0",
     # Data validation and manipulation
-    "pydantic==2.5.0",
-    "pandas==2.1.4",
+    "pydantic>=2.10.0",
+    "pandas>=2.2.0",
     # CLI interface
-    "click==8.1.7",
-    "rich==13.7.0",
+    "click>=8.1.7",
+    "rich>=13.7.0",
     # Utilities
-    "python-dotenv==1.0.0",
-    "tenacity==8.2.3",
+    "python-dotenv>=1.0.0",
+    "tenacity>=8.2.3",
     "yt-dlp>=2025.8.22",
 ]
 
@@ -68,7 +69,7 @@ dev = [
 ]
 
 [project.scripts]
-yt-analyze = "main:cli"
+yt-analyze = "main:analyze"
 yt-setup = "main:setup_command"
 
 [project.urls]

@@ -7,7 +7,7 @@ A chain-of-thought data pipeline for deep analysis of YouTube video content thro
 This pipeline transforms YouTube videos into structured insights through a 5-step chain-of-thought process:
 
 1. **Extract** - YouTube data (metadata, transcript, comments)
-2. **Process** - AI summaries using OpenAI GPT
+2. **Process** - AI summaries using OpenAI GPT-5 with enhanced reasoning
 3. **Synthesize** - Content compression with Google GenAI
 4. **Evaluate** - Critical thinking standards assessment
 5. **Prioritize** - Select most impactful follow-up questions
@@ -15,7 +15,7 @@ This pipeline transforms YouTube videos into structured insights through a 5-ste
 ## Features
 
 - 🎥 **YouTube Integration** - Extracts video metadata, transcripts, and comments
-- 🤖 **AI Processing** - Uses OpenAI GPT for content analysis and summarization
+- 🤖 **AI Processing** - Uses OpenAI GPT-5 with enhanced reasoning capabilities for content analysis
 - 🔍 **Critical Thinking** - Evaluates content against 8 critical thinking standards
 - 📊 **Smart Prioritization** - Generates priority questions for deeper investigation
 - 🎯 **Chain-of-Thought** - Structured thinking process for comprehensive analysis
@@ -29,93 +29,180 @@ This pipeline transforms YouTube videos into structured insights through a 5-ste
 
 ### Prerequisites
 
-- Python 3.9+ (3.13 not yet supported)
-- [UV package manager](https://docs.astral.sh/uv/) (recommended) or pip
+- Python 3.9-3.13
 - API keys for:
   - YouTube Data API v3
   - OpenAI API
   - Google GenAI (Gemini)
 
-### Setup
+### Installation from Source
+
+#### Method 1: Using UV Package Manager (Recommended)
+
+UV handles dependency management and Python version compatibility automatically.
 
 1. Install UV (if not already installed):
 ```bash
 # On macOS and Linux
 curl -LsSf https://astral.sh/uv/install.sh | sh
 
-# On Windows
+# On Windows  
 powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
 ```
 
-2. Clone the repository:
+2. Clone and install:
+```bash
+git clone <repository-url>
+cd yt-mcp
+uv sync
+```
+
+3. Run interactive setup:
+```bash
+uv run yt-setup
+```
+
+4. Use from anywhere:
+```bash
+uv run yt-analyze "VIDEO_URL"
+```
+
+#### Method 2: Using pip (Python 3.9-3.13)
+
+**Note**: All Python versions 3.9-3.13 are now fully supported with updated dependencies.
+
+1. Clone the repository:
 ```bash
 git clone <repository-url>
 cd yt-mcp
 ```
 
-3. Install dependencies with UV:
+2. Install in development mode:
 ```bash
-uv sync
+pip install -e .
 ```
 
-4. Configure API keys:
+3. Run interactive setup:
 ```bash
-uv run python main.py setup
+yt-setup
 ```
 
-Create a `.env` file with your API keys:
-```env
-YOUTUBE_API_KEY=your_youtube_api_key_here
-OPENAI_API_KEY=your_openai_api_key_here  
-GOOGLE_GENAI_API_KEY=your_google_genai_api_key_here
+The setup will guide you through configuring your API keys and create a configuration file at `~/.config/yt-mcp/.env`.
+
+#### Testing Your Installation
+
+Run the test script to verify everything works:
+
+```bash
+# For UV installation
+uv run python test_installation.py
+
+# For pip installation  
+python test_installation.py
 ```
+
+This will test all CLI commands and confirm your installation is working correctly.
 
 ## Usage
 
 ### Command Line Interface
 
-Basic usage:
+#### If you used UV installation:
 ```bash
-uv run python main.py analyze "https://www.youtube.com/watch?v=VIDEO_ID"
-```
+# Basic usage (works from any directory)
+uv run yt-analyze "https://www.youtube.com/watch?v=VIDEO_ID"
 
-Advanced options:
-```bash
-uv run python main.py analyze \
-  "https://www.youtube.com/watch?v=VIDEO_ID" \
+# Advanced options  
+uv run yt-analyze "https://www.youtube.com/watch?v=VIDEO_ID" \
   --instruction "What are the key technical insights?" \
   --max-comments 1000 \
   --max-words 50000 \
-  --output results.json \
-  --format json \
+  --output ~/Documents/analysis.md \
+  --format markdown \
   --verbose
 ```
 
-### Alternative: Using Pip
-
-If you prefer pip over UV:
+#### If you used pip installation:
 ```bash
-pip install -r requirements.txt
-python main.py analyze "https://www.youtube.com/watch?v=VIDEO_ID"
+# Basic usage (works from any directory)
+yt-analyze "https://www.youtube.com/watch?v=VIDEO_ID"
+
+# Advanced options
+yt-analyze "https://www.youtube.com/watch?v=VIDEO_ID" \
+  --instruction "What are the key technical insights?" \
+  --max-comments 1000 \
+  --max-words 50000 \
+  --output ~/Documents/analysis.md \
+  --format markdown \
+  --verbose
+```
+
+### Credential Management
+
+The tool automatically finds credentials in this order:
+1. `--env-file /path/to/custom/.env` (if specified)
+2. `.env` in current directory
+3. `~/.config/yt-mcp/.env` (created by `yt-setup`)
+4. System environment variables
+
+#### Credential Commands
+
+**UV Installation:**
+```bash
+# Interactive setup (recommended)
+uv run yt-setup
+
+# Show current credential status
+uv run yt-setup --show
+
+# Validate API keys
+uv run yt-setup --validate
+
+# Use custom credential file
+uv run yt-analyze "URL" --env-file /path/to/.env
+```
+
+**Pip Installation:**
+```bash
+# Interactive setup (recommended)
+yt-setup
+
+# Show current credential status
+yt-setup --show
+
+# Validate API keys
+yt-setup --validate
+
+# Use custom credential file
+yt-analyze "URL" --env-file /path/to/.env
 ```
 
 ### Command Options
 
+#### Content & Processing
 - `--instruction, -i` - Custom instruction for transcript analysis
 - `--max-comments, -c` - Maximum number of comments to process (default: 5000)
 - `--max-words, -w` - Maximum total word count for comments (default: 80000)
-- `--output, -o` - Output file path
+- `--transcript-only` - Extract and process only transcript (faster)
+- `--comments-only` - Extract and process only comments
+
+#### Output & Formatting  
+- `--output, -o` - Output file path (supports absolute and relative paths)
 - `--format` - Output format: `rich` (default), `json`, or `markdown`
 - `--verbose, -v` - Enable verbose logging
 - `--log-file` - Log file path
+
+#### Credentials & Configuration
+- `--env-file` - Path to custom .env file with API keys
+- `--config-dir` - Path to custom configuration directory
+
+#### Pipeline Control
 - `--no-transcript` - Skip transcript extraction
 - `--no-comments` - Skip comments extraction
 - `--no-transcript-processing` - Skip transcript AI processing
 - `--no-comments-processing` - Skip comments AI processing  
 - `--no-synthesis` - Skip content synthesis step
 - `--no-evaluation` - Skip critical thinking evaluation
-- `--transcript-only` - Extract and process only transcript (shortcut)
-- `--comments-only` - Extract and process only comments (shortcut)
 
 ### Programmatic Usage
 
@@ -206,7 +293,7 @@ The pipeline evaluates content against 8 critical thinking standards:
 config = PipelineConfig(
     max_comments=5000,              # Max comments to process
     max_total_word_length=80000,    # Max total words in comments
-    openai_model="gpt-4.5-preview", # OpenAI model
+    openai_model="gpt-5",           # GPT-5 with enhanced reasoning and Responses API
     openai_temperature=0.35,        # OpenAI temperature
     gemini_model="gemini-2.5-flash-preview-04-17",  # Gemini model
     gemini_temperature=0.5,         # Gemini temperature
@@ -226,13 +313,12 @@ config = PipelineConfig(
 
 ### Basic Analysis
 ```bash
-uv run python main.py analyze "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+yt-analyze "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
 ```
 
 ### Custom Instruction
 ```bash
-uv run python main.py analyze \
-  "https://www.youtube.com/watch?v=VIDEO_ID" \
+yt-analyze "https://www.youtube.com/watch?v=VIDEO_ID" \
   --instruction "What are the main business insights and market opportunities discussed?"
 ```
 
@@ -240,17 +326,15 @@ uv run python main.py analyze \
 
 JSON format:
 ```bash
-uv run python main.py analyze \
-  "https://www.youtube.com/watch?v=VIDEO_ID" \
-  --output analysis.json \
+yt-analyze "https://www.youtube.com/watch?v=VIDEO_ID" \
+  --output ~/Documents/analysis.json \
   --format json
 ```
 
 Markdown report:
 ```bash
-uv run python main.py analyze \
-  "https://www.youtube.com/watch?v=VIDEO_ID" \
-  --output report.md \
+yt-analyze "https://www.youtube.com/watch?v=VIDEO_ID" \
+  --output ~/Reports/report.md \
   --format markdown
 ```
 
@@ -258,23 +342,31 @@ uv run python main.py analyze \
 
 Process only transcript (faster):
 ```bash
-uv run python main.py analyze \
-  "https://www.youtube.com/watch?v=VIDEO_ID" \
+yt-analyze "https://www.youtube.com/watch?v=VIDEO_ID" \
   --transcript-only
 ```
 
 Skip specific steps:
 ```bash
-uv run python main.py analyze \
-  "https://www.youtube.com/watch?v=VIDEO_ID" \
+yt-analyze "https://www.youtube.com/watch?v=VIDEO_ID" \
   --no-synthesis \
   --no-evaluation
 ```
 
-### Batch Processing
+### Working with Custom Credentials
+
+Using a project-specific .env file:
 ```bash
-# See examples/basic_usage.py for batch processing example
-uv run python examples/basic_usage.py
+cd /path/to/project
+yt-analyze "VIDEO_URL" --env-file ./.env --output ./analysis.md
+```
+
+Using system environment variables:
+```bash
+export YOUTUBE_API_KEY="your_key"
+export OPENAI_API_KEY="your_key"
+export GOOGLE_GENAI_API_KEY="your_key"
+yt-analyze "VIDEO_URL"
 ```
 
 ## Output Format

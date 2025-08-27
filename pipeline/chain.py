@@ -23,18 +23,13 @@ class ChainProcessor:
     """
     Main chain-of-thought processor that orchestrates the 5-step analysis pipeline:
     1. Extract - Get YouTube data (metadata, transcript, comments)
-    2. Process - Generate AI summaries of transcript and comments  
+    2. Process - Generate AI summaries of transcript and comments
     3. Synthesize - Compress and combine insights
     4. Evaluate - Apply critical thinking standards
     5. Prioritize - Select most impactful follow-up questions
     """
 
-    def __init__(
-        self,
-        youtube_api_key: str,
-        openai_api_key: str,
-        google_genai_api_key: str
-    ):
+    def __init__(self, youtube_api_key: str, openai_api_key: str, google_genai_api_key: str):
         self.youtube_extractor = YouTubeExtractor(youtube_api_key)
         self.openai_processor = OpenAIProcessor(openai_api_key)
         self.content_synthesizer = ContentSynthesizer(google_genai_api_key)
@@ -43,19 +38,16 @@ class ChainProcessor:
         self.step_logger = StepLogger(logger)
 
     def analyze_video(
-        self,
-        video_url: str,
-        config: Optional[PipelineConfig] = None,
-        instruction: str = None
+        self, video_url: str, config: Optional[PipelineConfig] = None, instruction: str = None
     ) -> AnalysisResult:
         """
         Run the complete chain-of-thought analysis on a YouTube video
-        
+
         Args:
             video_url: YouTube video URL
             config: Pipeline configuration (uses defaults if None)
             instruction: Custom instruction for transcript analysis
-            
+
         Returns:
             Complete analysis result with all processing steps
         """
@@ -74,10 +66,7 @@ class ChainProcessor:
             video_id = self.youtube_extractor.extract_video_id(video_url)
             metadata = self._step_1_extract_metadata(video_id)
 
-            context = ProcessingContext(
-                video_metadata=metadata,
-                config=config
-            )
+            context = ProcessingContext(video_metadata=metadata, config=config)
 
             # Step 1: Extract YouTube data
             self._step_1_extract_data(context)
@@ -105,7 +94,7 @@ class ChainProcessor:
                 comments_summary=context.comments_summary,
                 compressed_summary=context.compressed_summary,
                 critical_assessment=context.critical_assessment,
-                total_processing_time=total_time
+                total_processing_time=total_time,
             )
 
             logger.info(f"Analysis completed in {total_time:.2f}s")
@@ -141,24 +130,28 @@ class ChainProcessor:
                 )
 
                 duration = self.step_logger.end_step(success=True)
-                context.processing_steps.append(ProcessingStep(
-                    step_name="extract_transcript",
-                    input_data=context.video_metadata.video_id,
-                    output_data=f"Transcript available: {context.transcript.available}, Words: {context.transcript.word_count}",
-                    processing_time=duration,
-                    success=True
-                ))
+                context.processing_steps.append(
+                    ProcessingStep(
+                        step_name="extract_transcript",
+                        input_data=context.video_metadata.video_id,
+                        output_data=f"Transcript available: {context.transcript.available}, Words: {context.transcript.word_count}",
+                        processing_time=duration,
+                        success=True,
+                    )
+                )
 
             except Exception as e:
                 duration = self.step_logger.end_step(success=False, error_message=str(e))
-                context.processing_steps.append(ProcessingStep(
-                    step_name="extract_transcript",
-                    input_data=context.video_metadata.video_id,
-                    output_data="",
-                    processing_time=duration,
-                    success=False,
-                    error_message=str(e)
-                ))
+                context.processing_steps.append(
+                    ProcessingStep(
+                        step_name="extract_transcript",
+                        input_data=context.video_metadata.video_id,
+                        output_data="",
+                        processing_time=duration,
+                        success=False,
+                        error_message=str(e),
+                    )
+                )
                 # Don't fail the entire pipeline for transcript issues
                 context.transcript = TranscriptData(text=None, word_count=0, available=False)
 
@@ -170,51 +163,55 @@ class ChainProcessor:
                 context.comments = self.youtube_extractor.fetch_comments(
                     context.video_metadata.video_id,
                     context.config.max_comments,
-                    context.config.max_total_word_length
+                    context.config.max_total_word_length,
                 )
 
                 duration = self.step_logger.end_step(success=True)
-                context.processing_steps.append(ProcessingStep(
-                    step_name="extract_comments",
-                    input_data=context.video_metadata.video_id,
-                    output_data=f"Comments: {context.comments.total_count}, Words: {context.comments.total_word_count}",
-                    processing_time=duration,
-                    success=True
-                ))
+                context.processing_steps.append(
+                    ProcessingStep(
+                        step_name="extract_comments",
+                        input_data=context.video_metadata.video_id,
+                        output_data=f"Comments: {context.comments.total_count}, Words: {context.comments.total_word_count}",
+                        processing_time=duration,
+                        success=True,
+                    )
+                )
 
             except Exception as e:
                 duration = self.step_logger.end_step(success=False, error_message=str(e))
-                context.processing_steps.append(ProcessingStep(
-                    step_name="extract_comments",
-                    input_data=context.video_metadata.video_id,
-                    output_data="",
-                    processing_time=duration,
-                    success=False,
-                    error_message=str(e)
-                ))
+                context.processing_steps.append(
+                    ProcessingStep(
+                        step_name="extract_comments",
+                        input_data=context.video_metadata.video_id,
+                        output_data="",
+                        processing_time=duration,
+                        success=False,
+                        error_message=str(e),
+                    )
+                )
                 # Don't fail the entire pipeline for comments issues
-                from models.schemas import CommentsData, Comment
+                from models.schemas import CommentsData
+
                 context.comments = CommentsData(
-                    comments=[],
-                    total_count=0,
-                    processed_count=0,
-                    total_word_count=0
+                    comments=[], total_count=0, processed_count=0, total_word_count=0
                 )
         else:
             # Comments disabled - create empty comments data
             from models.schemas import CommentsData
+
             context.comments = CommentsData(
-                comments=[],
-                total_count=0,
-                processed_count=0,
-                total_word_count=0
+                comments=[], total_count=0, processed_count=0, total_word_count=0
             )
 
     def _step_2_process_content(self, context: ProcessingContext, instruction: str) -> None:
         """Step 2: Process content with AI (transcript and comments summaries)"""
 
         # Process transcript if available and enabled
-        if context.config.enable_transcript_processing and context.transcript and context.transcript.available:
+        if (
+            context.config.enable_transcript_processing
+            and context.transcript
+            and context.transcript.available
+        ):
             self.step_logger.start_step("Process Video Transcript")
 
             try:
@@ -227,28 +224,36 @@ class ChainProcessor:
                 context.transcript_summary = "".join(transcript_chunks)
                 duration = self.step_logger.end_step(success=True)
 
-                context.processing_steps.append(ProcessingStep(
-                    step_name="process_transcript",
-                    input_data=f"Transcript ({context.transcript.word_count} words)",
-                    output_data=f"Summary ({len(context.transcript_summary.split())} words)",
-                    processing_time=duration,
-                    success=True
-                ))
+                context.processing_steps.append(
+                    ProcessingStep(
+                        step_name="process_transcript",
+                        input_data=f"Transcript ({context.transcript.word_count} words)",
+                        output_data=f"Summary ({len(context.transcript_summary.split())} words)",
+                        processing_time=duration,
+                        success=True,
+                    )
+                )
 
             except Exception as e:
                 duration = self.step_logger.end_step(success=False, error_message=str(e))
-                context.processing_steps.append(ProcessingStep(
-                    step_name="process_transcript",
-                    input_data=f"Transcript ({context.transcript.word_count} words)",
-                    output_data="",
-                    processing_time=duration,
-                    success=False,
-                    error_message=str(e)
-                ))
+                context.processing_steps.append(
+                    ProcessingStep(
+                        step_name="process_transcript",
+                        input_data=f"Transcript ({context.transcript.word_count} words)",
+                        output_data="",
+                        processing_time=duration,
+                        success=False,
+                        error_message=str(e),
+                    )
+                )
                 # Continue without transcript summary
 
         # Process comments if enabled and available
-        if context.config.enable_comments_processing and context.comments and context.comments.total_count > 0:
+        if (
+            context.config.enable_comments_processing
+            and context.comments
+            and context.comments.total_count > 0
+        ):
             self.step_logger.start_step("Process Video Comments")
 
             try:
@@ -261,24 +266,28 @@ class ChainProcessor:
                 context.comments_summary = "".join(comments_chunks)
                 duration = self.step_logger.end_step(success=True)
 
-                context.processing_steps.append(ProcessingStep(
-                    step_name="process_comments",
-                    input_data=f"Comments ({context.comments.total_count} items)",
-                    output_data=f"Summary ({len(context.comments_summary.split())} words)",
-                    processing_time=duration,
-                    success=True
-                ))
+                context.processing_steps.append(
+                    ProcessingStep(
+                        step_name="process_comments",
+                        input_data=f"Comments ({context.comments.total_count} items)",
+                        output_data=f"Summary ({len(context.comments_summary.split())} words)",
+                        processing_time=duration,
+                        success=True,
+                    )
+                )
 
             except Exception as e:
                 duration = self.step_logger.end_step(success=False, error_message=str(e))
-                context.processing_steps.append(ProcessingStep(
-                    step_name="process_comments",
-                    input_data=f"Comments ({context.comments.total_count} items)",
-                    output_data="",
-                    processing_time=duration,
-                    success=False,
-                    error_message=str(e)
-                ))
+                context.processing_steps.append(
+                    ProcessingStep(
+                        step_name="process_comments",
+                        input_data=f"Comments ({context.comments.total_count} items)",
+                        output_data="",
+                        processing_time=duration,
+                        success=False,
+                        error_message=str(e),
+                    )
+                )
                 # Don't fail the entire pipeline for comments processing issues
                 context.comments_summary = ""
 
@@ -299,30 +308,32 @@ class ChainProcessor:
 
         try:
             context.compressed_summary = self.content_synthesizer.compress_content(
-                context.transcript_summary or "",
-                context.comments_summary or "",
-                context.config
+                context.transcript_summary or "", context.comments_summary or "", context.config
             )
 
             duration = self.step_logger.end_step(success=True)
-            context.processing_steps.append(ProcessingStep(
-                step_name="synthesize_content",
-                input_data="Transcript + Comments summaries",
-                output_data=f"Compressed summary ({len(context.compressed_summary.split())} words)",
-                processing_time=duration,
-                success=True
-            ))
+            context.processing_steps.append(
+                ProcessingStep(
+                    step_name="synthesize_content",
+                    input_data="Transcript + Comments summaries",
+                    output_data=f"Compressed summary ({len(context.compressed_summary.split())} words)",
+                    processing_time=duration,
+                    success=True,
+                )
+            )
 
         except Exception as e:
             duration = self.step_logger.end_step(success=False, error_message=str(e))
-            context.processing_steps.append(ProcessingStep(
-                step_name="synthesize_content",
-                input_data="Transcript + Comments summaries",
-                output_data="",
-                processing_time=duration,
-                success=False,
-                error_message=str(e)
-            ))
+            context.processing_steps.append(
+                ProcessingStep(
+                    step_name="synthesize_content",
+                    input_data="Transcript + Comments summaries",
+                    output_data="",
+                    processing_time=duration,
+                    success=False,
+                    error_message=str(e),
+                )
+            )
             raise
 
     def _step_4_evaluate_content(self, context: ProcessingContext) -> None:
@@ -331,10 +342,9 @@ class ChainProcessor:
         if not context.config.enable_evaluation:
             # Create minimal assessment to avoid breaking downstream code
             from models.schemas import CriticalThinkingAssessment
+
             context.critical_assessment = CriticalThinkingAssessment(
-                standards=[],
-                selected_questions=[],
-                impact_scores={}
+                standards=[], selected_questions=[], impact_scores={}
             )
             return
 
@@ -342,28 +352,30 @@ class ChainProcessor:
 
         try:
             context.critical_assessment = self.critical_evaluator.evaluate_content(
-                context.transcript_summary or "",
-                context.comments_summary or "",
-                context.config
+                context.transcript_summary or "", context.comments_summary or "", context.config
             )
 
             duration = self.step_logger.end_step(success=True)
-            context.processing_steps.append(ProcessingStep(
-                step_name="evaluate_critical_thinking",
-                input_data="Transcript + Comments summaries",
-                output_data=f"Assessment with {len(context.critical_assessment.standards)} standards, {len(context.critical_assessment.selected_questions)} priority questions",
-                processing_time=duration,
-                success=True
-            ))
+            context.processing_steps.append(
+                ProcessingStep(
+                    step_name="evaluate_critical_thinking",
+                    input_data="Transcript + Comments summaries",
+                    output_data=f"Assessment with {len(context.critical_assessment.standards)} standards, {len(context.critical_assessment.selected_questions)} priority questions",
+                    processing_time=duration,
+                    success=True,
+                )
+            )
 
         except Exception as e:
             duration = self.step_logger.end_step(success=False, error_message=str(e))
-            context.processing_steps.append(ProcessingStep(
-                step_name="evaluate_critical_thinking",
-                input_data="Transcript + Comments summaries",
-                output_data="",
-                processing_time=duration,
-                success=False,
-                error_message=str(e)
-            ))
+            context.processing_steps.append(
+                ProcessingStep(
+                    step_name="evaluate_critical_thinking",
+                    input_data="Transcript + Comments summaries",
+                    output_data="",
+                    processing_time=duration,
+                    success=False,
+                    error_message=str(e),
+                )
+            )
             raise
