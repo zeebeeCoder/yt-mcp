@@ -1,517 +1,155 @@
 # YouTube Analysis Pipeline
 
-A chain-of-thought data pipeline for deep analysis of YouTube video content through AI processing.
+**Stop watching long videos. Start getting smarter insights.**
 
-## Overview
+Transform any YouTube video into structured analysis with AI-powered critical thinking and ready-to-research questions.
 
-This pipeline transforms YouTube videos into structured insights through a 5-step chain-of-thought process:
+## What This Tool Does
 
-1. **Extract** - YouTube data (metadata, transcript, comments)
-2. **Process** - AI summaries using OpenAI GPT-5 with enhanced reasoning
-3. **Synthesize** - Content compression with Google GenAI
-4. **Evaluate** - Critical thinking standards assessment
-5. **Prioritize** - Select most impactful follow-up questions
+### The Problem
+- 📺 **Long videos eat your time** - 2-hour podcasts, lectures, and discussions
+- 💬 **Comments contain valuable insights** - but they're scattered and hard to parse
+- 🔍 **You want to research further** - but don't know what questions to ask
+- 📝 **Taking notes is tedious** - and you miss important details
 
-## Features
+### The Solution
+Give this tool any YouTube URL and get:
 
-- 🎥 **YouTube Integration** - Extracts video metadata, transcripts, and comments
-- 🤖 **AI Processing** - Uses OpenAI GPT-5 with enhanced reasoning capabilities for content analysis
-- 🔍 **Critical Thinking** - Evaluates content against 8 critical thinking standards
-- 📊 **Smart Prioritization** - Generates priority questions for deeper investigation
-- 🎯 **Chain-of-Thought** - Structured thinking process for comprehensive analysis
-- 💻 **CLI Interface** - Easy-to-use command line tool with rich formatting
-- 🔧 **Configurable** - Customizable processing parameters
-- 📝 **Multiple Output Formats** - Rich console display, JSON export, or Markdown reports
-- 🛠️ **Flexible Pipeline Control** - Enable/disable individual processing steps
-- 🚀 **YT-DLP Integration** - Robust transcript extraction with fallback mechanisms
+1. **📄 Executive Summary** - Key points from the entire video in minutes, not hours
+2. **💡 Critical Analysis** - AI evaluates the content for clarity, accuracy, logic, and fairness  
+3. **❓ Research Questions** - Prioritized follow-up questions you can hand off to Perplexity, ChatGPT, or Claude
+4. **📊 Structured Output** - Clean Markdown reports perfect for documentation and sharing
 
-## Installation
+### Example Output Structure
+```
+📽️ Video Information
+├── Why everyone is worried about stocks right now!
+├── Channel: Richard J Murphy
+├── 150.7s processing time
+└── 22,712 words transcript + 806 comments analyzed
 
-### Prerequisites
+🔍 Key Insights  
+├── Market Crash Risks: Policy, AI, Deglobalization
+├── • Overvaluation: Record S&P 500/FTSE despite weak fundamentals
+├── • Drivers: Tariff inflation, consumer weakness, geopolitical risks
+└── • Mitigation: Diversify, maintain liquidity, monitor policy response
 
-- Python 3.9-3.13
-- API keys for:
-  - YouTube Data API v3
-  - OpenAI API
-  - Google GenAI (Gemini)
+🤔 Priority Questions for Research  
+├── 1. How can we verify US market overvaluation claims independently?
+├── 2. Can you quantify 'weakening fundamentals' with specific metrics?
+├── 3. How do Austrian economics view current crash potential?
+├── 4. What policy responses beyond Keynesian stimulus exist?
+├── 5. Does historical crash pattern imply causation with current indicators?
+└── 6. What alternative explanations exist for high valuations?
 
-### Installation from Source
+📋 Critical Thinking Assessment
+├── Clarity: 8/10 - Clear central claim with structured arguments
+├── Accuracy: 6/10 - Relies on indicators, needs more evidence  
+├── Significance: 9/10 - Major economic implications globally
+└── Fairness: 6/10 - Could benefit from more balanced perspectives
+```
 
-#### Method 1: Using UV Package Manager (Recommended)
+### Real-World Use Cases
+- **📚 Academic Research** - Analyze lectures and extract research questions
+- **💼 Business Intelligence** - Process industry discussions and identify opportunities  
+- **🎓 Learning** - Get structured summaries from educational content
+- **📰 News Analysis** - Extract key points and identify follow-up investigations
 
-UV handles dependency management and Python version compatibility automatically.
+## Quick Start
 
-1. Install UV (if not already installed):
+### 1. Install
 ```bash
-# On macOS and Linux
+# Install UV package manager
 curl -LsSf https://astral.sh/uv/install.sh | sh
 
-# On Windows  
-powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
+# Install yt-mcp globally
+uv tool install git+https://github.com/zeebeeCoder/yt-mcp.git
 ```
 
-2. Clone and install:
-```bash
-git clone <repository-url>
-cd yt-mcp
-uv sync
-```
-
-3. Run interactive setup:
-```bash
-uv run yt-setup
-```
-
-4. Use from anywhere:
-```bash
-uv run yt-analyze "VIDEO_URL"
-```
-
-#### Method 2: Using pip (Python 3.9-3.13)
-
-**Note**: All Python versions 3.9-3.13 are now fully supported with updated dependencies.
-
-1. Clone the repository:
-```bash
-git clone <repository-url>
-cd yt-mcp
-```
-
-2. Install in development mode:
-```bash
-pip install -e .
-```
-
-3. Run interactive setup:
-```bash
-yt-setup
-```
-
-The setup will guide you through configuring your API keys and create a configuration file at `~/.config/yt-mcp/.env`.
-
-#### Testing Your Installation
-
-Run the test script to verify everything works:
+### 2. Setup API Keys
+You need API keys from:
+- [YouTube Data API v3](https://developers.google.com/youtube/v3/getting-started)
+- [OpenAI](https://platform.openai.com/api-keys) 
+- [Google AI Studio](https://aistudio.google.com/app/apikey)
 
 ```bash
-# For UV installation
-uv run python test_installation.py
-
-# For pip installation  
-python test_installation.py
+yt-setup  # Interactive setup - guides you through everything
 ```
 
-This will test all CLI commands and confirm your installation is working correctly.
-
-## Usage
-
-### Command Line Interface
-
-#### If you used UV installation:
+### 3. Analyze Any Video
 ```bash
-# Basic usage (works from any directory)
-uv run yt-analyze "https://www.youtube.com/watch?v=VIDEO_ID"
-
-# Advanced options  
-uv run yt-analyze "https://www.youtube.com/watch?v=VIDEO_ID" \
-  --instruction "What are the key technical insights?" \
-  --max-comments 1000 \
-  --max-words 50000 \
-  --output ~/Documents/analysis.md \
-  --format markdown \
-  --verbose
+yt-analyze "https://www.youtube.com/watch?v=kg8RU3GDpsw"
 ```
 
-#### If you used pip installation:
-```bash
-# Basic usage (works from any directory)
-yt-analyze "https://www.youtube.com/watch?v=VIDEO_ID"
+That's it! Works from any directory.
 
-# Advanced options
-yt-analyze "https://www.youtube.com/watch?v=VIDEO_ID" \
-  --instruction "What are the key technical insights?" \
-  --max-comments 1000 \
-  --max-words 50000 \
-  --output ~/Documents/analysis.md \
-  --format markdown \
-  --verbose
-```
-
-### Credential Management
-
-The tool automatically finds credentials in this order:
-1. `--env-file /path/to/custom/.env` (if specified)
-2. `.env` in current directory
-3. `~/.config/yt-mcp/.env` (created by `yt-setup`)
-4. System environment variables
-
-#### Credential Commands
-
-**UV Installation:**
-```bash
-# Interactive setup (recommended)
-uv run yt-setup
-
-# Show current credential status
-uv run yt-setup --show
-
-# Validate API keys
-uv run yt-setup --validate
-
-# Use custom credential file
-uv run yt-analyze "URL" --env-file /path/to/.env
-```
-
-**Pip Installation:**
-```bash
-# Interactive setup (recommended)
-yt-setup
-
-# Show current credential status
-yt-setup --show
-
-# Validate API keys
-yt-setup --validate
-
-# Use custom credential file
-yt-analyze "URL" --env-file /path/to/.env
-```
-
-### Command Options
-
-#### Content & Processing
-- `--instruction, -i` - Custom instruction for transcript analysis
-- `--max-comments, -c` - Maximum number of comments to process (default: 5000)
-- `--max-words, -w` - Maximum total word count for comments (default: 80000)
-- `--transcript-only` - Extract and process only transcript (faster)
-- `--comments-only` - Extract and process only comments
-
-#### Output & Formatting  
-- `--output, -o` - Output file path (supports absolute and relative paths)
-- `--format` - Output format: `rich` (default), `json`, or `markdown`
-- `--verbose, -v` - Enable verbose logging
-- `--log-file` - Log file path
-
-#### Credentials & Configuration
-- `--env-file` - Path to custom .env file with API keys
-- `--config-dir` - Path to custom configuration directory
-
-#### Pipeline Control
-- `--no-transcript` - Skip transcript extraction
-- `--no-comments` - Skip comments extraction
-- `--no-transcript-processing` - Skip transcript AI processing
-- `--no-comments-processing` - Skip comments AI processing  
-- `--no-synthesis` - Skip content synthesis step
-- `--no-evaluation` - Skip critical thinking evaluation
-
-### Programmatic Usage
-
-```python
-from config import Config, get_pipeline_config
-from pipeline.chain import ChainProcessor
-
-# Create processor
-processor = ChainProcessor(
-    youtube_api_key=Config.YOUTUBE_API_KEY,
-    openai_api_key=Config.OPENAI_API_KEY,
-    google_genai_api_key=Config.GOOGLE_GENAI_API_KEY
-)
-
-# Configure pipeline
-config = get_pipeline_config(
-    max_comments=1000,
-    enable_transcript=True
-)
-
-# Analyze video
-result = processor.analyze_video(
-    video_url="https://www.youtube.com/watch?v=VIDEO_ID",
-    config=config
-)
-
-print(result.compressed_summary)
-for question in result.critical_assessment.selected_questions:
-    print(f"- {question}")
-```
-
-## Architecture
-
-### Project Structure
-
-```
-yt-mcp/
-├── main.py                    # CLI entry point
-├── config.py                  # Configuration management
-├── requirements.txt           # Dependencies
-├── pipeline/
-│   ├── chain.py              # Main ChainProcessor orchestrator
-│   ├── extractors.py         # YouTube data extraction
-│   ├── processors.py         # OpenAI processing
-│   ├── synthesizers.py       # Google GenAI synthesis
-│   └── evaluators.py         # Critical thinking evaluation
-├── models/
-│   └── schemas.py            # Pydantic data models
-├── utils/
-│   ├── logging.py            # Logging utilities
-│   └── errors.py             # Error handling
-└── examples/
-    └── basic_usage.py        # Usage examples
-```
-
-### Data Flow
-
-```
-Video URL → Extract Metadata → Extract Transcript & Comments
-    ↓
-Process with OpenAI → Transcript Summary + Comments Summary
-    ↓
-Synthesize with GenAI → Compressed Insights
-    ↓
-Evaluate with Critical Thinking → Standards Assessment
-    ↓
-Prioritize Questions → Final Analysis Result
-```
-
-### Critical Thinking Standards
-
-The pipeline evaluates content against 8 critical thinking standards:
-
-1. **Clarity** - Are statements clear and understandable?
-2. **Accuracy** - Is the information truthful and correct?
-3. **Precision** - Are details specific enough?
-4. **Depth** - Does analysis address underlying complexities?
-5. **Breadth** - Are multiple perspectives considered?
-6. **Logic** - Do conclusions follow from evidence?
-7. **Significance** - Are important issues prioritized?
-8. **Fairness** - Is thinking unbiased and justified?
-
-## Configuration
-
-### Pipeline Configuration
-
-```python
-config = PipelineConfig(
-    max_comments=5000,              # Max comments to process
-    max_total_word_length=80000,    # Max total words in comments
-    openai_model="gpt-5",           # GPT-5 with enhanced reasoning and Responses API
-    openai_temperature=0.35,        # OpenAI temperature
-    gemini_model="gemini-2.5-flash-preview-04-17",  # Gemini model
-    gemini_temperature=0.5,         # Gemini temperature
-    num_selected_questions=6,       # Number of priority questions
-    enable_transcript=True,         # Process transcript
-    enable_audio_download=False     # Download audio (future feature)
-)
-```
-
-### Environment Variables
-
-- `YOUTUBE_API_KEY` - YouTube Data API v3 key
-- `OPENAI_API_KEY` - OpenAI API key
-- `GOOGLE_GENAI_API_KEY` - Google GenAI API key
-
-## Examples
+## Usage Examples
 
 ### Basic Analysis
 ```bash
-yt-analyze "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+# Analyze any YouTube video
+yt-analyze "https://www.youtube.com/watch?v=kg8RU3GDpsw"
 ```
 
-### Custom Instruction
+### Save to File
 ```bash
-yt-analyze "https://www.youtube.com/watch?v=VIDEO_ID" \
-  --instruction "What are the main business insights and market opportunities discussed?"
+# Generate Markdown report
+yt-analyze "VIDEO_URL" --output analysis.md --format markdown
+
+# Generate JSON for automation
+yt-analyze "VIDEO_URL" --output data.json --format json
 ```
 
-### Export Results
-
-JSON format:
+### Custom Analysis
 ```bash
-yt-analyze "https://www.youtube.com/watch?v=VIDEO_ID" \
-  --output ~/Documents/analysis.json \
-  --format json
+# Focus on specific aspects
+yt-analyze "VIDEO_URL" --instruction "What are the business insights and market opportunities?"
+
+# Transcript only (faster)
+yt-analyze "VIDEO_URL" --transcript-only
 ```
 
-Markdown report:
+### Handoff to Research Tools
+After running analysis, take the **Priority Questions** from the output and paste them into:
+- **Perplexity** - for web research and fact-checking
+- **ChatGPT/Claude** - for deeper analysis and discussion
+- **Your notes** - for follow-up research topics
+
+## Common Options
+- `--instruction "custom focus"` - Direct the AI analysis
+- `--output filename.md` - Save results to file  
+- `--format markdown|json` - Choose output format
+- `--transcript-only` - Skip comments (faster)
+- `--verbose` - See detailed processing
+
+## How It Works
+
+**AI-Powered Analysis Chain:**
+1. **Extract** - Downloads video transcript and top comments
+2. **Summarize** - GPT-5 creates executive summary with key insights
+3. **Compress** - Distills content into headline + bullet points
+4. **Evaluate** - Assesses content against 8 critical thinking standards  
+5. **Prioritize** - Generates 6 most impactful follow-up research questions
+
+**Perfect for Research Handoffs:**
+The priority questions are designed to be copy-pasted into research tools like Perplexity for deeper investigation.
+
+## Troubleshooting
+
+**API Keys Issues:**
 ```bash
-yt-analyze "https://www.youtube.com/watch?v=VIDEO_ID" \
-  --output ~/Reports/report.md \
-  --format markdown
+yt-setup --show    # Check current status
+yt-setup --validate # Test API connections
 ```
 
-### Pipeline Step Control
+**Can't find yt-analyze command:**
+- Make sure UV is in your PATH: `source ~/.bashrc` or restart terminal
+- Reinstall: `uv tool install --force git+https://github.com/zeebeeCoder/yt-mcp.git`
 
-Process only transcript (faster):
-```bash
-yt-analyze "https://www.youtube.com/watch?v=VIDEO_ID" \
-  --transcript-only
-```
-
-Skip specific steps:
-```bash
-yt-analyze "https://www.youtube.com/watch?v=VIDEO_ID" \
-  --no-synthesis \
-  --no-evaluation
-```
-
-### Working with Custom Credentials
-
-Using a project-specific .env file:
-```bash
-cd /path/to/project
-yt-analyze "VIDEO_URL" --env-file ./.env --output ./analysis.md
-```
-
-Using system environment variables:
-```bash
-export YOUTUBE_API_KEY="your_key"
-export OPENAI_API_KEY="your_key"
-export GOOGLE_GENAI_API_KEY="your_key"
-yt-analyze "VIDEO_URL"
-```
-
-## Output Format
-
-### Rich Console Output
-- Video metadata and processing summary
-- Key insights in highlighted panels
-- Priority questions for further investigation
-- Processing steps with timing information
-
-### JSON Output
-```json
-{
-  "video_metadata": {
-    "title": "Video Title",
-    "author": "Channel Name",
-    "published_date": "2024-01-01T00:00:00Z"
-  },
-  "compressed_summary": "Key insights...",
-  "critical_assessment": {
-    "selected_questions": [
-      "Question 1...",
-      "Question 2..."
-    ]
-  },
-  "total_processing_time": 45.2
-}
-```
-
-### Markdown Report Output
-Professional structured reports with:
-- 📽️ Video information and metadata
-- 📊 Data extraction summary 
-- 🔍 Key insights and compressed analysis
-- 🤔 Priority questions for investigation
-- 📋 Critical thinking assessment with ratings
-- ⚙️ Processing steps table with timing
-- 📈 Analysis summary and metrics
-
-## Error Handling
-
-The pipeline includes comprehensive error handling:
-
-- **API Errors** - Handles rate limits, authentication issues
-- **Data Validation** - Validates all inputs and outputs
-- **Retry Logic** - Automatic retries for transient failures
-- **Graceful Degradation** - Continues processing when non-critical steps fail
-
-## Logging
-
-Structured logging with multiple levels:
-
-```bash
-# Basic logging
-uv run python main.py analyze URL
-
-# Verbose logging
-uv run python main.py analyze URL --verbose
-
-# Log to file
-uv run python main.py analyze URL --log-file analysis.log
-```
-
-## Performance
-
-### Typical Processing Times
-- Transcript-only processing: 15-30 seconds
-- Small video (< 100 comments): 30-60 seconds
-- Medium video (500-1000 comments): 1-2 minutes  
-- Large video (5000+ comments): 3-5 minutes
-
-### Resource Usage
-- Memory: ~100-500 MB during processing
-- API calls: 3-6 requests total (YouTube + OpenAI + GenAI)
-- Storage: JSON outputs typically < 100 KB
-
-## Limitations
-
-- **YouTube API**: Rate limits apply (10,000 requests/day default)
-- **Transcript Availability**: Not all videos have transcripts (YT-DLP provides robust extraction with fallbacks)
-- **Comment Languages**: Works best with English content
-- **API Costs**: OpenAI and GenAI usage incurs costs
-- **Processing Time**: Large videos may take several minutes
-
-## Development
-
-### Setup Development Environment
-
-```bash
-# Clone and setup
-git clone <repository-url>
-cd yt-mcp
-uv sync --dev  # Install with development dependencies
-
-# Run linting and type checks
-uv run ruff check .
-uv run ruff format --check .
-uv run mypy .
-
-# Run tests
-uv run pytest
-uv run pytest --cov  # With coverage
-```
-
-### Development Commands
-
-```bash
-# Format code
-uv run ruff format .
-
-# Fix linting issues
-uv run ruff check . --fix
-
-# Run specific test
-uv run pytest tests/test_config.py -v
-
-# Install new dependency
-uv add package-name
-uv add --dev package-name  # Development dependency
-```
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Setup development environment with `uv sync --dev`
-4. Make changes with tests and proper formatting
-5. Run linting and tests: `uv run ruff check . && uv run pytest`
-6. Submit a pull request
+**Slow processing:**
+- Use `--transcript-only` to skip comments processing
+- Large videos (2+ hours) can take 2-5 minutes
 
 ## License
 
-[Your License Here]
-
-## Support
-
-For issues and questions:
-1. Check the logs with `--verbose` flag
-2. Verify API keys are configured correctly
-3. Ensure video URL is accessible and public
-4. Check API rate limits and quotas
-
-Common issues:
-- **"Missing API keys"**: Configure `.env` file
-- **"Video not found"**: Check URL and video privacy
-- **"Rate limit exceeded"**: Wait and retry, or increase quotas
-- **"Transcript unavailable"**: YT-DLP will try multiple extraction methods automatically
-- **"XML parsing errors"**: Fixed with YT-DLP integration (robust subtitle format support)
+MIT
